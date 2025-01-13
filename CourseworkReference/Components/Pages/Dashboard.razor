@@ -12,20 +12,15 @@
         margin-bottom: 20px;
     }
 
-    /*.tag {*/
-    /*    display: inline-block; !* Ensures it behaves like a tag *!*/
-    /*    padding: 4px 8px; !* Adds some space inside the tag *!*/
-    /*    margin-left: 8px; !* Optional: Adds spacing between elements *!*/
-    /*    font-size: 0.9rem; !* Adjust font size if needed *!*/
-    /*    font-weight: bold; !* Makes the text stand out *!*/
-    /*    color: #fff; !* White text color *!*/
-    /*    background-color: #007bff; !* Background color for the tag *!*/
-    /*    border-radius: 12px; !* Rounds the corners *!*/
-    /*    border: 1px solid #0056b3; !* Adds a border for a "fancy" effect *!*/
-    /*    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); !* Optional: Adds a shadow *!*/
-    /*    text-align: center; !* Ensures the text is centered *!*/
-    /*    white-space: nowrap; !* Prevents wrapping if the tag text is long *!*/
-    /*}*/
+    .dashboard-card-darkorchid {
+        background-color: darkorchid;
+        color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
 
     .dashboard-header {
         display: flex;
@@ -40,34 +35,29 @@
         margin-top: 20px;
     }
 
-    /*.transaction-item {*/
-    /*    display: flex;*/
-    /*    justify-content: space-between;*/
-    /*    padding: 10px 0;*/
-    /*    border-bottom: 1px solid #eee;*/
-    /*}*/
 </style>
 
 <div class="container mt-4">
-    <h3 style="color:green">Available Balance = @(totalIncome + totalDebt - totalExpense)</h3>
+    <h3 style="color: darkorchid; text-align: center;">TrackEx</h3>
+    <br />
 
     <div class="row">
         <div class="col-md-4">
-            <div class="dashboard-card bg-success text-white text-center">
+            <div class="dashboard-card-darkorchid">
                 <h5>Total Inflows</h5>
                 <h2>@totalIncome</h2>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="dashboard-card bg-danger text-white text-center">
+            <div class="dashboard-card-darkorchid">
                 <h5>Total Outflows</h5>
                 <h2>@totalExpense</h2>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="dashboard-card bg-warning text-white text-center">
+            <div class="dashboard-card-darkorchid">
                 <h5>Total Debt</h5>
-                <h2>@totalDebt T @clearedDebt C @remainingDebt R</h2>
+                <h2>@totalDebt <br /> Cleared @clearedDebt <br /> <span style="color: yellow;">Pending @remainingDebt</span></h2>
             </div>
         </div>
     </div>
@@ -84,14 +74,8 @@
     <div class="d-flex justify-content-end mb-3">
     </div>
     <div class="row">
-        @* <div class="col-md-6"> *@
-        @*     <div class="dashboard-card"> *@
-        @*         <h5>Financial Overview</h5> *@
-        @*         <div class="chart-container"> *@
-        @*             <p>TASK NO 4: ***Please add some charts here everyone!***</p> *@
-        @*         </div> *@
-        @*     </div> *@
-        @* </div> *@
+
+
         <div>
             Filter
             <select name="typeFilter" id="typeFilter" @bind="typeFiler" class="m-2">
@@ -121,7 +105,7 @@
                         Total Transactions: @transactions.Count
                     </span>
                 </div>
-                @*TASK NO 3: Need From and to dates selector to filter data in transactions to show below*@
+
                 <div class="transaction-list">
                     <div class="table table-bordered table-striped">
                         <thead>
@@ -181,6 +165,63 @@
         </div>
     </div>
 </div>
+
+
+@*Top 5 transactions*@
+<div class="col-md-12" style="width: 100%">
+    <div class="dashboard-card">
+        <div class="d-flex justify-content-between">
+            <h5>Top 5 Transactions</h5>
+        </div>
+
+        <div class="transaction-list">
+            <div class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Note</th>
+                        <th>Type</th>
+                        <th>Tag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var transaction in transactions
+                    .OrderByDescending(t => t.Amount) // Sort by amount in descending order
+                    .Take(5))                        // Limit to top 5 transactions
+                    {
+                        <tr class="transaction-item">
+                            <td>@transaction.Description</td>
+                            <td>@transaction.Date.ToString("yyyy-MM-dd")</td>
+                            <td>@transaction.Amount.ToString()</td>
+                            @if (transaction.Note != null)
+                            {
+                                <td>@transaction.Note</td>
+                            }
+                            else
+                            {
+                                <td></td>
+                            }
+                            <td class="@(transaction.Type == "Income" ? "text-success" : "text-danger")">
+                                @transaction.Type
+                            </td>
+
+                            @if (transaction.TagName != null)
+                            {
+                                <td class="tag">@transaction.TagName</td>
+                            }
+                            else
+                            {
+                                <td></td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 @* Modal for Adding Transaction *@
 @if (showModal)
@@ -319,14 +360,6 @@
     private string errorMessage;
     private bool typeIsClearDebt = false;
 
-    /* Declaring and assigning value to a LIST of type Transaction. These values are set by default.
-    The new values from modal form will get appended to last index of this list */
-    // private List<Transaction> transactions = new List<Transaction>()
-    // {
-    //     new Transaction { Description = "Grocery Shopping", Date = DateTime.Parse("2024-12-25"), Amount = 150, Type = "Expense" },
-    //     new Transaction { Description = "Freelance Payment", Date = DateTime.Parse("2024-12-24"), Amount = 500, Type = "Income" },
-    //     new Transaction { Description = "Borrowed from Someone", Date = DateTime.Parse("2024-12-22"), Amount = 300, Type = "Debt" }
-    // };
     private List<Transaction> transactions = new ListTransactionService(new GetJsonFilePathService()).ListTransactions();
 
     //this nethod is called when Add Transaction button from the dashboard is clicked
@@ -393,7 +426,7 @@
     //This method gets called from the modal button "Add"
     private void AddTransaction()
     {
-        //TASK NO 2:*** Use try catch block for exception haldling***
+
         try
         {
             if (newTransaction != null && !string.IsNullOrWhiteSpace(newTransaction.Description))
