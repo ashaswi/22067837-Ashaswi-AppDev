@@ -6,7 +6,7 @@ public class GetJsonFilePathService
     {
         return Path.Combine(FileSystem.AppDataDirectory, "transactions.json");
     }
-    
+
     public String GetTagPath()
     {
         return Path.Combine(FileSystem.AppDataDirectory, "tags.json");

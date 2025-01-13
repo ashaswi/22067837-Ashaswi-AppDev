@@ -9,7 +9,7 @@ public class SearchService
         {
             transactions = transactions.Where(t => t.Description.Contains(searchTerm)).ToList();
         }
-        
+
         return transactions;
     }
 }

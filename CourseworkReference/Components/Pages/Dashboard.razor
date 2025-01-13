@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using CourseworkReference.Entities
 @using CourseworkReference.Services
+@using CourseworkReference.Services.Tag
 @using CourseworkReference.Services.Transaction
 
 <style>
@@ -74,6 +75,7 @@
     <div class="d-flex justify-content-end  mb-3">
         <button class="btn btn-primary m-2" @onclick="() => OpenModal()">Add Transaction</button>
         <button class="btn btn-primary m-2" @onclick="() => OpenModal(true)">Clear debt</button>
+        <button class="btn btn-primary m-2" @onclick="OpenAddTagsModal">Add Tag</button>
     </div>
 
     <div class="d-flex justify-content-end mb-3">
@@ -98,6 +100,16 @@
                 <option value="Expense">Expense</option>
                 <option value="Debt">Debt</option>
             </select>
+            <select name="typeFilter" id="tagFilter" @bind="tagFilter" class="m-2">
+                <option value="">Select Tag</option>
+                @foreach (var tag in tags)
+                {
+                    <option value="@tag.Name">@tag.Name</option>
+                }
+            </select>
+            <div class="m-2">
+                Search: <input type="text" name="searchQuery" @bind="searchQuery">
+            </div>
             <button class="btn btn-secondary m-2" @onclick="ApplyClear">Clear Filters</button>
             <button class="btn btn-secondary m-2" @onclick="ApplyMods">Apply</button>
         </div>
@@ -113,42 +125,54 @@
                 <div class="transaction-list">
                     <div class="table table-bordered table-striped">
                         <thead>
-                        <tr>
-                            <th>Description</th>
-                            <th>Date</th>
-                            <th>Amount</th>
-                            <th>Note</th>
-                            <th>Type</th>
-                        </tr>
+                            <tr>
+                                <th>Description</th>
+                                <th>
+                                    Date
+                                    @if (sortDesc)
+                                    {
+                                        <button class="btn-info" @onclick="SortAsc">Sort &darr;</button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn-info" @onclick="SortDesc">Sort &uarr;</button>
+                                    }
+                                </th>
+                                <th>Amount</th>
+                                <th>Note</th>
+                                <th>Type</th>
+                                <th>Tag</th>
+                            </tr>
                         </thead>
                         @foreach (var transaction in transactions)
                         {
                             <tbody>
 
-                            <tr class="transaction-item">
-                                <td>@transaction.Description</td>
-                                <td>@transaction.Date.ToString("yyyy-MM-dd")</td>
-                                <td>@transaction.Amount.ToString()</td>
-                                @if (transaction.Note != null)
-                                {
-                                    <td>@transaction.Note</td>
-                                }
-                                else
-                                {
-                                    <td></td>
-                                }
-                                <td
-                                    class="@(transaction.Type == "Income" ? "text-success" : "text-danger")">@transaction.Type</td>
+                                <tr class="transaction-item">
+                                    <td>@transaction.Description</td>
+                                    <td>@transaction.Date.ToString("yyyy-MM-dd")</td>
+                                    <td>@transaction.Amount.ToString()</td>
+                                    @if (transaction.Note != null)
+                                    {
+                                        <td>@transaction.Note</td>
+                                    }
+                                    else
+                                    {
+                                        <td></td>
+                                    }
+                                    <td class="@(transaction.Type == "Income" ? "text-success" : "text-danger")">
+                                        @transaction.Type
+                                    </td>
 
-                                @if (transaction.TagName != null)
-                                {
-                                    <td class="tag">@transaction.TagName</td>
-                                }
-                                else
-                                {
-                                    <td></td>
-                                }
-                            </tr>
+                                    @if (transaction.TagName != null)
+                                    {
+                                        <td class="tag">@transaction.TagName</td>
+                                    }
+                                    else
+                                    {
+                                        <td></td>
+                                    }
+                                </tr>
                             </tbody>
                         }
                     </div>
@@ -171,19 +195,19 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label>Description</label>
-                        <input type="text" class="form-control" @bind="newTransaction.Description"/>
+                        <input type="text" class="form-control" @bind="newTransaction.Description" />
                     </div>
                     <div class="mb-3">
                         <label>Date</label>
-                        <input type="date" class="form-control" @bind="newTransaction.Date"/>
+                        <input type="date" class="form-control" @bind="newTransaction.Date" />
                     </div>
                     <div class="mb-3">
                         <label>Amount</label>
-                        <input type="number" class="form-control" @bind="newTransaction.Amount"/>
+                        <input type="number" class="form-control" @bind="newTransaction.Amount" />
                     </div>
                     <div class="mb-3">
                         <label>Note</label>
-                        <input type="text" class="form-control" @bind="newTransaction.Note"/>
+                        <input type="text" class="form-control" @bind="newTransaction.Note" />
                     </div>
 
                     @if (typeIsClearDebt == false)
@@ -198,11 +222,52 @@
                             </select>
                         </div>
                     }
-          
+                    <div class="mb-3">
+                        <label>Tag</label>
+                        <select class="form-control" @bind="newTransaction.TagName">
+                            <option value=""></option>
+                            @foreach (var tag in tags)
+                            {
+                                <option value="@tag.Name">@tag.Name</option>
+                            }
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @onclick="CloseModal">Close</button>
                     <button type="button" class="btn btn-primary" @onclick="AddTransaction">Add</button>
+                </div>
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @errorMessage
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+
+@if (showAddTagsModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Tag</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Name</label>
+                        <input type="text" class="form-control" @bind="newTag.Name" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Close</button>
+                    <button type="button" class="btn btn-primary" @onclick="AddTag">Add</button>
                 </div>
                 @if (!string.IsNullOrEmpty(errorMessage))
                 {
@@ -222,13 +287,16 @@
     protected override void OnInitialized()
     {
         CalculateTotals();
+        tags = new ListTagService(new GetJsonFilePathService()).ListTags();
     }
 
 
     //Declaring some fields
     private Transaction newTransaction = new Transaction(); //Transaction class object
+    private Tag newTag = new Tag(); //Transaction class object
 
-    private bool showModal = false; //a boolean value that determines wheather to show add transaction modal form or not 
+    private bool showModal = false; //a boolean value that determines wheather to show add transaction modal form or not
+    private bool showAddTagsModal = false;
 
     //These fields are meant to hold the total values after CalculateTotals() method is called.
     private decimal totalIncome;
@@ -236,15 +304,22 @@
     private decimal totalDebt;
     private decimal remainingDebt;
     private decimal clearedDebt;
+    private bool sortDesc = false;
+    private string sortField = "Date";
+
+    private List<Tag> tags;
 
     // filter
+    private string? tagFilter;
     private string? typeFiler;
+    private string? searchQuery;
+
 
     // field to display validation error
     private string errorMessage;
     private bool typeIsClearDebt = false;
 
-    /* Declaring and assigning value to a LIST of type Transaction. These values are set by default. 
+    /* Declaring and assigning value to a LIST of type Transaction. These values are set by default.
     The new values from modal form will get appended to last index of this list */
     // private List<Transaction> transactions = new List<Transaction>()
     // {
@@ -269,6 +344,12 @@
 
         errorMessage = string.Empty;
         showModal = true;
+    }
+
+    private void OpenAddTagsModal()
+    {
+        newTag = new Tag();
+        showAddTagsModal = true;
     }
 
     //This method can be called anytime we need to get total amt of each transaction type.
@@ -302,6 +383,11 @@
     {
         showModal = false;
         typeIsClearDebt = false;
+    }
+
+    private void CloseTagModal()
+    {
+        showAddTagsModal = false;
     }
 
     //This method gets called from the modal button "Add"
@@ -340,6 +426,30 @@
         CloseModal();
     }
 
+    private void AddTag()
+    {
+        try
+        {
+            if (newTag != null && !string.IsNullOrWhiteSpace(newTag.Name))
+            {
+                // instantiate AddTransactionService class
+                var addTagService = new AddTagService(new GetJsonFilePathService());
+                // call AddTransaction method from AddTransactionService class
+
+
+                addTagService.AddTag(newTag);
+                tags.Add(newTag);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage(ex.Message);
+        }
+
+        CloseTagModal();
+    }
+
 
     private void ShowErrorMessage(string message)
     {
@@ -351,7 +461,14 @@
     {
         transactions = new ListTransactionService(new GetJsonFilePathService()).ListTransactions();
         var filterService = new FilterService();
-        transactions = filterService.Filter(transactions, typeFiler);
+        transactions = filterService.Filter(transactions, typeFiler, tagFilter);
+        var searchService = new SearchService();
+        transactions = searchService.ApplySearch(transactions, searchQuery);
+        if (sortDesc == true)
+        {
+            // sort by date
+            transactions = transactions.OrderByDescending(t => t.Date).ToList();
+        }
         StateHasChanged();
     }
 
@@ -359,7 +476,21 @@
     {
         transactions = new ListTransactionService(new GetJsonFilePathService()).ListTransactions();
         typeFiler = null;
+        tagFilter = null;
+        searchQuery = null;
         StateHasChanged();
+    }
+
+    private void SortDesc()
+    {
+        sortDesc = true;
+        ApplyMods();
+    }
+
+    private void SortAsc()
+    {
+        sortDesc = false;
+        ApplyMods();
     }
 
 
