@@ -4,12 +4,17 @@
 @using CourseworkReference.Services.Tag
 @using CourseworkReference.Services.Transaction
 
+  @*@{
+        var transactionPath = (new GetJsonFilePathService()).GetTransactionPath();
+    }
+    <p>@transactionPath</p>*@
 <style>
     .dashboard-card {
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         padding: 20px;
         margin-bottom: 20px;
+        text-align: center;
     }
 
     .dashboard-card-darkorchid {
@@ -19,7 +24,15 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         padding: 20px;
         margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
         text-align: center;
+    }
+
+    .custom-card-height {
+        height: 195px; 
     }
 
     .dashboard-header {
@@ -34,7 +47,6 @@
     .transaction-list {
         margin-top: 20px;
     }
-
 </style>
 
 <div class="container mt-4">
@@ -45,14 +57,14 @@
 
     <div class="row">
         <div class="col-md-4">
-            <div class="dashboard-card-darkorchid">
-                <h5>Total Inflows</h5>
+            <div class="dashboard-card-darkorchid custom-card-height">
+                <h5 text-align: center;>Total Inflows</h5>
                 <h2>@totalIncome</h2>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="dashboard-card-darkorchid">
-                <h5>Total Outflows</h5>
+            <div class="dashboard-card-darkorchid custom-card-height">
+                <h5 text-align: center;>Total Outflows</h5>
                 <h2>@totalExpense</h2>
             </div>
         </div>
@@ -63,6 +75,7 @@
             </div>
         </div>
     </div>
+
 
     <div class="d-flex justify-content-end  mb-3">
         <button class="btn btn-primary m-2" @onclick="() => OpenModal()">Add Transaction</button>
@@ -224,6 +237,60 @@
     </div>
 </div>
 
+@*Bottom 5 transactions*@
+<div class="col-md-12" style="width: 100%">
+    <div class="dashboard-card">
+        <div class="d-flex justify-content-between">
+            <h5>Bottom 5 Transactions</h5>
+        </div>
+
+        <div class="transaction-list">
+            <div class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Note</th>
+                        <th>Type</th>
+                        <th>Tag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var transaction in transactions
+                    .OrderBy(t => t.Amount) // Sort by amount in ascending order for bottom transactions
+                    .Take(5))               // Limit to bottom 5 transactions
+                    {
+                        <tr class="transaction-item">
+                            <td>@transaction.Description</td>
+                            <td>@transaction.Date.ToString("yyyy-MM-dd")</td>
+                            <td>@transaction.Amount.ToString()</td>
+                            @if (transaction.Note != null)
+                            {
+                                <td>@transaction.Note</td>
+                            }
+                            else
+                            {
+                                <td></td>
+                            }
+                            <td class="@(transaction.Type == "Income" ? "text-success" : "text-danger")">
+                                @transaction.Type
+                            </td>
+
+                            @if (transaction.TagName != null)
+                            {
+                                <td class="tag">@transaction.TagName</td>
+                            }
+                            else
+                            {
+                                <td></td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </div>
+        </div>
+    </div>
+</div>
 
 @* Modal for Adding Transaction *@
 @if (showModal)
@@ -363,6 +430,8 @@
     private bool typeIsClearDebt = false;
 
     private List<Transaction> transactions = new ListTransactionService(new GetJsonFilePathService()).ListTransactions();
+    // private List<Transaction> topTransactions = new ListTransactionService(new GetJsonFilePathService()).ListTransactions();
+
 
     //this nethod is called when Add Transaction button from the dashboard is clicked
     private void OpenModal(bool isClearDebt = false)
