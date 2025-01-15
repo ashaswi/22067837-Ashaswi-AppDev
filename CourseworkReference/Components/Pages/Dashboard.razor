@@ -4,10 +4,7 @@
 @using CourseworkReference.Services.Tag
 @using CourseworkReference.Services.Transaction
 
-  @*@{
-        var transactionPath = (new GetJsonFilePathService()).GetTransactionPath();
-    }
-    <p>@transactionPath</p>*@
+ 
 <style>
     .dashboard-card {
         border-radius: 10px;
@@ -52,7 +49,9 @@
 <div class="container mt-4">
     <h3 style="color: darkorchid; text-align: center;">TrackEx</h3>
     <br />
-    <h6 style="color:green">Available Balance = @(totalIncome + totalDebt - totalExpense)</h6>
+    @*<h6 style="color:green">Available Balance = @(totalIncome + totalDebt - totalExpense)</h6>*@
+    <h6 style="color:green">Available Balance = @(totalIncome + remainingDebt - totalExpense)</h6>
+
     <br />
 
     <div class="row">
@@ -140,6 +139,8 @@
                                 <th>Amount</th>
                                 <th>Note</th>
                                 <th>Type</th>
+                                <th>Due Date</th>
+                                <th>Source of Debt</th>
                                 <th>Tag</th>
                             </tr>
                         </thead>
@@ -171,6 +172,8 @@
                                     {
                                         <td></td>
                                     }
+                                    <td>@transaction.DueDate?.ToString("yyyy-MM-dd")</td>
+                                    <td>@transaction.Source</td>
                                 </tr>
                             </tbody>
                         }
@@ -200,6 +203,7 @@
                         <th>Tag</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     @foreach (var transaction in transactions
                     .OrderByDescending(t => t.Amount) // Sort by amount in descending order
@@ -235,6 +239,14 @@
             </div>
         </div>
     </div>
+</div>
+
+<div class="col-md-12">
+    <MudPaper Class="p-4">
+        <MudChart ChartType="ChartType.Pie" Class="my-pie-chart" Height="400px" Width="400px"
+                  ChartOptions="@(new() { ChartPalette = new[] { "#07eb3c", "#eb073c", "#ebe307" } })"
+                  InputData="@chartData" InputLabels="@chartLabels"   />
+    </MudPaper>
 </div>
 
 @*Bottom 5 transactions*@
@@ -332,6 +344,19 @@
                             </select>
                         </div>
                     }
+
+                    @if (newTransaction.Type == "Debt")
+                    {
+                        <div class="mb-3">
+                            <label>Due Date</label>
+                            <input type="date" class="form-control" @bind="newTransaction.DueDate" />
+                        </div>
+                        <div class="mb-3">
+                            <label>Source</label>
+                            <input type="text" class="form-control" @bind="newTransaction.Source" />
+                        </div>
+                    }
+
                     <div class="mb-3">
                         <label>Tag</label>
                         <select class="form-control" @bind="newTransaction.TagName">
@@ -408,7 +433,7 @@
     private bool showModal = false; //a boolean value that determines wheather to show add transaction modal form or not
     private bool showAddTagsModal = false;
 
-    //These fields are meant to hold the total values after CalculateTotals() method is called.
+    //These fields hold the total values after CalculateTotals() method is called.
     private decimal totalIncome;
     private decimal totalExpense;
     private decimal totalDebt;
@@ -432,6 +457,10 @@
     private List<Transaction> transactions = new ListTransactionService(new GetJsonFilePathService()).ListTransactions();
     // private List<Transaction> topTransactions = new ListTransactionService(new GetJsonFilePathService()).ListTransactions();
 
+    private List<Transaction> topTransactions = new ListTransactionService(new GetJsonFilePathService()).ListTransactions().OrderByDescending(t => t.Amount).Take(5).ToList();
+
+    private double[] chartData = { };
+    private string[] chartLabels = { "Total Income", "Total Expense", "Total Debt" };
 
     //this nethod is called when Add Transaction button from the dashboard is clicked
     private void OpenModal(bool isClearDebt = false)
@@ -464,7 +493,6 @@
             .Where(t => t.Type == "Income")
             .Sum(t => t.Amount);
 
-        //TASK NO 1:*** use these totalExpense and totalDebt values instead of static HTML values
         totalExpense = transactions
             .Where(t => t.Type == "Expense")
             .Sum(t => t.Amount);
@@ -477,8 +505,10 @@
         clearedDebt = transactions
             .Where(t => t.Type == "Debt" && t.Amount < 0)
             .Sum(t => Math.Abs(t.Amount));
+        chartData = new double[] { Convert.ToDouble(totalIncome), Convert.ToDouble(totalExpense), Convert.ToDouble(totalDebt) };
 
         remainingDebt = totalDebt - clearedDebt;
+        StateHasChanged();
     }
 
 

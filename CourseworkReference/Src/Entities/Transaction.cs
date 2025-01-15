@@ -9,4 +9,7 @@ public class Transaction
     public string Type { get; set; } // Income, Expense, Debt
     public string? TagName { get; set; }
     public string? Note { get; set; }
+    public DateTime? DueDate { get; set; }
+    public string? Source { get; set; }
+
 }
