@@ -3,23 +3,23 @@
 namespace CourseworkReference.Services.Tag;
 using Entities;
 
-public class ListTagService(GetJsonFilePathService getJsonFilePathService)
+public class ListTagService(GetJsonFilePathService getJsonFilePathService) //  Constructor takes `GetJsonFilePathService` instance 
 {
-    public List<Tag> ListTags()
+    public List<Tag> ListTags() //  // Method to retrieve a list of tags from a JSON file
     {
         String filePath = getJsonFilePathService.GetTagPath();
         Console.WriteLine($"File path: {filePath}");
-        // Check if the file exists
+        // Checking if the file exists
         List<Tag> tags;
         if (File.Exists(filePath))
         {
-            // Read and deserialize existing tags
+            // Reading and deserialize existing tags
             var json = File.ReadAllText(filePath);
             tags = JsonConvert.DeserializeObject<List<Tag>>(json) ?? new List<Tag>();
         }
         else
         {
-            // Initialize a new list if file doesn't exist
+            // Initializing a new list if file doesn't exist
             tags = new List<Tag>();
         }
 

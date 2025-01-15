@@ -76,6 +76,8 @@
     </div>
 
 
+
+    <!-- Buttons -->
     <div class="d-flex justify-content-end  mb-3">
         <button class="btn btn-primary m-2" @onclick="() => OpenModal()">Add Transaction</button>
         <button class="btn btn-primary m-2" @onclick="() => OpenModal(true)">Clear debt</button>
@@ -89,10 +91,10 @@
     </div>
     <div class="row">
 
-
+        <!-- Filter Section -->
         <div>
             Filter
-            <select name="typeFilter" id="typeFilter" @bind="typeFiler" class="m-2">
+            <select name="typeFilter" id="typeFilter" @bind="typeFiler" class="m-2">   <!-- Binding the id value -->
                 <option value="">Select Type</option>
                 <option value="Income">Income</option>
                 <option value="Expense">Expense</option>
@@ -105,6 +107,8 @@
                     <option value="@tag.Name">@tag.Name</option>
                 }
             </select>
+
+            <!-- Search Section -->
             <div class="m-2">
                 Search: <input type="text" name="searchQuery" @bind="searchQuery">
             </div>
@@ -421,7 +425,7 @@
     //This method is called when the dashboard page is opened
     protected override void OnInitialized()
     {
-        CalculateTotals();
+        CalculateTotals(); // For available balance
         tags = new ListTagService(new GetJsonFilePathService()).ListTags();
     }
 

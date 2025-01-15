@@ -1,6 +1,6 @@
 namespace CourseworkReference.Entities;
 
-
+// This class defines a transaction like income, expense, debt
 public class Transaction
 {
     public string Description { get; set; }
